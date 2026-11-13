@@ -28,10 +28,10 @@ const create = async (req, res) => {
 };
 
 
-
 const list = async (req, res) => {
   try {
-    const users = await User.find().select("-password");
+    const users = await User.find()
+      .select("-hashed_password -salt -password");
 
     return res.json(users);
 
@@ -46,7 +46,7 @@ const list = async (req, res) => {
 const read = async (req, res) => {
   try {
     const user = await User.findById(req.params.id)
-      .select("-password");
+      .select("-hashed_password -salt -password");
 
     if (!user) {
       return res.status(404).json({
@@ -107,6 +107,7 @@ const update = async (req, res) => {
 
 
 
+
 const remove = async (req, res) => {
   try {
     const user = await User.findByIdAndDelete(req.params.id);
@@ -144,4 +145,27 @@ const removeAll = async (req, res) => {
 };
 
 
-export default { create, list, read, update, remove, removeAll };
+// Find user by ID for authorization
+const userByID = async (req, res, next, id) => {
+  try {
+    const user = await User.findById(id)
+      .select('-hashed_password -salt -password');
+
+    if (!user) {
+      return res.status(404).json({
+        error: "User not found"
+      });
+    }
+
+    req.profile = user;
+    next();
+
+  } catch (err) {
+    return res.status(400).json({
+      error: "Could not retrieve user"
+    });
+  }
+};
+
+
+export default { create, list, read, update, remove, removeAll, userByID };
