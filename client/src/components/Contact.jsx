@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import apiRequest from '../api/api';
 
 export default function Contact() {
   const navigate = useNavigate();
@@ -14,6 +15,8 @@ export default function Contact() {
 
   const [formData, setFormData] = useState(initialState);
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleChange = (e) => {
     setFormData({
@@ -22,19 +25,34 @@ export default function Contact() {
     });
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+ 
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    console.log("Form Submitted:", formData);
+  setLoading(true);
+  setError("");
 
-    // Show thank-you message - Shataer Abulizi
+  try {
+    await apiRequest('/api/contacts', {
+      method: 'POST',
+      body: JSON.stringify(formData)
+    });
+
+    // Show thank-you message only after successful saving
     setSubmitted(true);
 
-    // Redirect after 2 seconds - Shataer Abulizi
+    // Redirect to Home after 2 seconds
     setTimeout(() => {
       navigate("/");
     }, 2000);
-  };
+
+  } catch (err) {
+    setError(err.message);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const handleReset = () => {
     setFormData(initialState);
@@ -63,6 +81,16 @@ export default function Contact() {
           <p style={{ marginBottom: "20px" }}>
             I'd love to hear from you! Reach out with questions, feedback, or just to say hello.
           </p>
+
+          {error && (
+            <p style={{ color: "red", fontWeight: "bold" }}>
+              Error: {error}
+            </p>
+          )}
+
+          {loading && (
+            <p>Sending your message...</p>
+          )}
 
           <form onSubmit={handleSubmit} style={{ maxWidth: "600px" }}>
             <div style={{ marginBottom: "15px" }}>
@@ -127,7 +155,8 @@ export default function Contact() {
 
             <div style={{ marginTop: "20px" }}>
               <button
-                type="submit"
+                type={loading ? "Sending..." : "Submit"}
+                disabled={loading}
                 style={{
                   padding: "10px 20px",
                   backgroundColor: "navy",

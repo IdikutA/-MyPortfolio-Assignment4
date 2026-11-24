@@ -37,7 +37,8 @@ const signin = async (req, res) => {
       user: {
         _id: user._id,
         name: user.name,
-        email: user.email
+        email: user.email,
+        role: user.role || 'user'
       }
     });
 
@@ -81,4 +82,30 @@ const hasAuthorization = (req, res, next) => {
   next();
 };
 
-export default { signin, signout, requireSignin, hasAuthorization };
+
+const requireAdmin = async (req, res, next) => {
+  try {
+    if (!req.auth || !req.auth._id) {
+      return res.status(401).json({
+        error: 'Authentication required'
+      });
+    }
+
+    const user = await User.findById(req.auth._id);
+
+    if (!user || user.role !== 'admin') {
+      return res.status(403).json({
+        error: 'Administrator access required'
+      });
+    }
+
+    next();
+  } catch (err) {
+    return res.status(500).json({
+      error: 'Authorization check failed'
+    });
+  }
+};
+
+
+export default { signin, signout, requireSignin, hasAuthorization, requireAdmin };

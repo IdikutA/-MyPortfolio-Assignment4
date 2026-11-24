@@ -3,13 +3,55 @@ import dashboard from '../assets/dashboard.png';
 import messagingApp from '../assets/messaging_app.png';
 import sql from '../assets/sql.png';
 import uyghurKebab from '../assets/uyghurkebabhouse.png';
+import { useEffect, useState } from 'react';
+import apiRequest from '../api/api';
 
 export default function Projects() {
+  const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const loadProjects = async () => {
+      try {
+        const data = await apiRequest('/api/projects');
+        setProjects(data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProjects();
+  }, []);
   return (
     <div style={{ padding: '20px', maxWidth: '1000px', margin: '0 auto', textAlign: 'left' }}>
       <h1 style={{ marginBottom: '30px' }}>Projects</h1>
       <br />
       {}
+
+      <h2>Projects from MongoDB</h2>
+
+      {loading && <p>Loading projects...</p>}
+
+      {error && <p style={{ color: 'red' }}>{error}</p>}
+
+      {!loading && !error && projects.length === 0 && (
+        <p>No projects found in the database.</p>
+      )}
+
+      {!loading && !error && projects.map((project) => (
+        <div key={project._id} style={{ marginBottom: '20px' }}>
+          <h3>{project.title}</h3>
+          <p>{project.description}</p>
+          <p>
+            Created by: {project.firstName} {project.lastName}
+          </p>
+        </div>
+      ))}
+
+      
       <h2>JavaFX Media Demo</h2>
       <p>
         I have developed a JavaFX application using Java, as shown below. This application uses the
@@ -87,7 +129,6 @@ export default function Projects() {
         alt="SQL Diagram"
         style={{ borderRadius: '8px', marginBottom: '40px' }}
       />
-
       {}
       <h2>Uyghur Kebab House</h2>
       <p>

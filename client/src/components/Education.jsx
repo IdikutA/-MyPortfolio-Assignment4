@@ -1,9 +1,53 @@
+import { useEffect, useState } from 'react';
+import apiRequest from '../api/api';
+
 export default function Education() {
+
+
+const [qualifications, setQualifications] = useState([]);
+const [loading, setLoading] = useState(true);
+const [error, setError] = useState('');
+
+useEffect(() => {
+  const loadQualifications = async () => {
+    try {
+      const data = await apiRequest('/api/qualifications');
+      setQualifications(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  loadQualifications();
+}, []);
+
   return (
     <div style={{ padding: '20px', maxWidth: '1000px', margin: '0 auto', textAlign: 'left' }}>
       <h1 style={{ marginBottom: '30px' }}>Education</h1>
 
       {}
+      <section>
+        <h2>Qualifications from MongoDB</h2>
+
+        {loading && <p>Loading qualifications...</p>}
+
+        {error && <p style={{ color: 'red' }}>{error}</p>}
+
+        {!loading && !error && qualifications.length === 0 && (
+          <p>No qualifications found in the database.</p>
+        )}
+
+        {!loading && !error && qualifications.map((qualification) => (
+          <div key={qualification._id} style={{ marginBottom: '20px' }}>
+            <h3>{qualification.title}</h3>
+            <p>{qualification.institution}</p>
+            <p>{qualification.description}</p>
+          </div>
+        ))}
+      </section>
+
       <h2>Centennial College - Online Campus (2025 - Present)</h2>
       <h3>Software Engineering Technology - Artificial Intelligence Program</h3>
       <p>

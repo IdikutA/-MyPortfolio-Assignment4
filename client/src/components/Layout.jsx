@@ -1,8 +1,25 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, Outlet } from 'react-router-dom';
 import logo from '../assets/logo.png';
 
 export default function Layout() {
+
+  const [role, setRole] = useState(
+    sessionStorage.getItem('role') || ''
+  );
+
+  useEffect(() => {
+    const updateAuth = () => {
+      setRole(sessionStorage.getItem('role') || '');
+    };
+
+    window.addEventListener('authChange', updateAuth);
+
+    return () => {
+      window.removeEventListener('authChange', updateAuth);
+    };
+  }, []);
+
   return (
     <div
       style={{
@@ -49,7 +66,23 @@ export default function Layout() {
         <Link to="/contact" className="nav-link">
           Contact
         </Link>
-      </nav>
+        <Link to="/signup" className="nav-link">
+          Sign Up
+        </Link>
+       {/* {!role && (
+          <Link to="/signin" className="nav-link">
+            Sign In
+          </Link>
+        )} */}
+        <Link to="/signin" className="nav-link">
+          {role ? 'My Account' : 'Sign In'}
+        </Link>
+        {role === 'admin' && (
+          <Link to="/admin" className="nav-link">
+            Admin Dashboard
+          </Link>
+        )}
+      </nav>  
          
       <main style={{ flex: 1, padding: '20px' }}>
         <Outlet />

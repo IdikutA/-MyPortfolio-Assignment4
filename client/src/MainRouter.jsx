@@ -6,6 +6,9 @@ import Project from "./components/Project";
 import Education from "./components/Education";
 import Services from "./components/Services";
 import Contact from "./components/Contact";
+import Signup from "./components/Signup";
+import Signin from "./components/Signin";
+import AdminDashboard from "./components/AdminDashboard";
 
  const MainRouter = () => {
   return ( 
@@ -19,6 +22,9 @@ import Contact from "./components/Contact";
                 <Route path="education" element={<Education />} />
                 <Route path="services" element={<Services />} />
                 <Route path="contact" element={<Contact />} />
+                <Route path="signup" element={<Signup />} />
+                <Route path="signin" element={<Signin />} /> 
+                <Route path="admin" element={<AdminDashboard />} />   
                 </Route>
             </Routes>
 

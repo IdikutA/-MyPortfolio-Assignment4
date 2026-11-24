@@ -1,6 +1,7 @@
 //import express from "express";
 //var express = require("express");
 //var app = express();
+import seedAdmin from './server/utils/seedAdmin.js';
 import app from "./server/express.js";
 import router from "./server/assets-router.js";
 //const assetsRouter = require("./server/assets-router");
@@ -11,12 +12,14 @@ import Qualification from "./server/models/qualification.model.js";
 import User from "./server/models/user.model.js";
 
 
+
 const mongoURI = process.env.MONGODB_URI;
 
 mongoose.connect(mongoURI)
   .then(async () => {
     console.log("Connected to MongoDB");
 
+    await seedAdmin();
     await Contact.createCollection();
     await Project.createCollection();
     await Qualification.createCollection();
