@@ -21,6 +21,7 @@
     "nodemon": "^3.1.14"
   },
   "scripts": {
+    "start": "node server.js",
     "dev": "concurrently \"npm run dev --prefix client\" \"node --env-file=.env ./node_modules/nodemon/bin/nodemon.js server.js\"",
     "build": "vite build",
     "lint": "eslint src --ext js,jsx --report-unused-disable-directives --max-warnings 0",
