@@ -155,7 +155,7 @@ const handleSubmit = async (e) => {
 
             <div style={{ marginTop: "20px" }}>
               <button
-                type={loading ? "Sending..." : "Submit"}
+                type="submit"
                 disabled={loading}
                 style={{
                   padding: "10px 20px",
@@ -167,7 +167,7 @@ const handleSubmit = async (e) => {
                   marginRight: "10px",
                 }}
               >
-                Submit
+                {loading ? "Sending..." : "Submit"}
               </button>
 
               <button

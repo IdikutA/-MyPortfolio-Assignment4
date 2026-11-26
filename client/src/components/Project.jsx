@@ -1,8 +1,8 @@
-import mediademo from '../assets/mediademo.png';
-import dashboard from '../assets/dashboard.png';
-import messagingApp from '../assets/messaging_app.png';
-import sql from '../assets/sql.png';
-import uyghurKebab from '../assets/uyghurkebabhouse.png';
+import mediademo from '../assets/mediademo.webp';
+import dashboard from '../assets/dashboard.webp';
+import messagingApp from '../assets/messaging_app.webp';
+import sql from '../assets/sql.webp';
+import uyghurKebab from '../assets/uyghurkebabhouse.webp';
 import { useEffect, useState } from 'react';
 import apiRequest from '../api/api';
 

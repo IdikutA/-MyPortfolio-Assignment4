@@ -6,3 +6,12 @@
 # Dependencies
 node_modules/
 client/node_modules/
+
+# Generated build and coverage files
+dist/
+coverage/
+
+# Cypress credentials and generated files
+client/cypress.env.json
+client/cypress/videos/
+client/cypress/screenshots/
