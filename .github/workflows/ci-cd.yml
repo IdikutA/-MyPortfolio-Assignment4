@@ -1,0 +1,134 @@
+name: Portfolio CI/CD
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: portfolio-production
+  cancel-in-progress: false
+
+jobs:
+  test-build-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '26'
+
+      - name: Install backend dependencies
+        run: npm ci
+
+      - name: Install frontend dependencies
+        working-directory: client
+        run: npm ci
+
+      - name: Run Vitest unit tests
+        working-directory: client
+        run: npm test
+
+      - name: Start backend
+        env:
+          PORT: 5000
+          MONGODB_URI: ${{ secrets.TEST_MONGODB_URI }}
+          JWT_SECRET: ${{ secrets.TEST_JWT_SECRET }}
+          ADMIN_EMAIL: ${{ secrets.TEST_ADMIN_EMAIL }}
+          ADMIN_PASSWORD: ${{ secrets.TEST_ADMIN_PASSWORD }}
+        run: |
+          npm start > backend.log 2>&1 &
+          timeout 120 bash -c 'until grep -q "Four collections created successfully" backend.log; do sleep 2; done'
+
+      - name: Prepare regular test user
+        env:
+          TEST_EMAIL: ${{ secrets.TEST_EMAIL }}
+          TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
+        run: |
+          node --input-type=module <<'EOF'
+          const credentials = {
+            email: process.env.TEST_EMAIL,
+            password: process.env.TEST_PASSWORD
+          };
+
+          const signin = async () => fetch(
+            'http://localhost:5000/auth/signin',
+            {
+              method: 'POST',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify(credentials)
+            }
+          );
+
+          let response = await signin();
+
+          if (!response.ok) {
+            await fetch('http://localhost:5000/auth/signup', {
+              method: 'POST',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify({
+                name: 'CI Test User',
+                ...credentials
+              })
+            });
+
+            response = await signin();
+          }
+
+          if (!response.ok) {
+            throw new Error('Test user authentication failed');
+          }
+
+          console.log('Test user ready');
+          EOF
+
+      - name: Start frontend
+        working-directory: client
+        env:
+          VITE_API_URL: http://localhost:5000
+        run: |
+          npm run dev -- --host 0.0.0.0 > frontend.log 2>&1 &
+          timeout 60 bash -c 'until curl -fsS http://localhost:5173 > /dev/null; do sleep 2; done'
+
+      - name: Install Cypress binary
+        working-directory: client
+        run: npx cypress install
+
+      - name: Run Cypress E2E tests
+        working-directory: client
+        env:
+          CYPRESS_TEST_EMAIL: ${{ secrets.TEST_EMAIL }}
+          CYPRESS_TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
+        run: npx cypress run --browser chrome
+
+      - name: Upload Cypress recordings
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-evidence
+          path: |
+            client/cypress/videos/
+            client/cypress/screenshots/
+
+      - name: Build production frontend
+        working-directory: client
+        env:
+          VITE_API_URL: ${{ vars.VITE_API_URL }}
+        run: |
+          test -n "$VITE_API_URL"
+          npm run build
+
+      - name: Trigger Render deployment
+        env:
+          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: curl --fail --silent --show-error "$RENDER_DEPLOY_HOOK"
+
+      - name: Deploy frontend to Netlify
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+        run: npx --yes netlify-cli deploy --prod --dir=client/dist --no-build
